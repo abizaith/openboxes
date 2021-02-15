@@ -803,9 +803,21 @@ class DataService {
 
     def transformObject(Object object, Map includeFields) {
         Map properties = [:]
+        def value = null
         includeFields.each { fieldName, property ->
-            def value = property.tokenize('.').inject(object) { v, k -> v?."$k" }
-            properties[fieldName] = value ?: ""
+            if (property instanceof LinkedHashMap) {
+                value = property.value.tokenize('.').inject(object) { v, k -> v?."$k" }
+                if (property.format && value) {
+                    value = value.format(property.format)
+                }
+                if (property.defaultValue && !value) {
+                    value = property.defaultValue
+                }
+                properties[fieldName] = value ?: ""
+            } else {
+                value = property.tokenize('.').inject(object) { v, k -> v?."$k" }
+                properties[fieldName] = value ?: ""
+            }
         }
         return properties
     }
